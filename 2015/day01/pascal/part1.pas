@@ -3,75 +3,90 @@ program Part1;
 {$mode objfpc}{$H+}
 
 uses
-  SysUtils;
+  SysUtils, Classes;
+
+const
+  NumberOfTests = 9;
+  ExpectedResults: array[1..NumberOfTests] of Integer = (0, 0, 3, 3, 3, -1, -1, -3, -3);
 
 function ReadFileContentsAsString(const FilePath: string): string;
 var
   FileData: TextFile;
   Line: string;
+  StringBuilder: TStringList;
 begin
-  Result := '';
-  if FileExists(FilePath) then
-  begin
-    AssignFile(FileData, FilePath);
-    Reset(FileData);
-    while not EOF(FileData) do
+  StringBuilder := TStringList.Create;
+  try
+    if FileExists(FilePath) then
     begin
-      ReadLn(FileData, Line);
-      Result := Result + Line;
-    end;
-    CloseFile(FileData);
-  end
-end;
-
-function Part1(const FileContents: string): integer;
-var
-  i: integer;
-  CurrChar: string;
-  Res: Integer;
-begin
-  Res := 0;
-  for i := 1 to Length(FileContents) do
-  begin
-    CurrChar := FileContents[i];
-    if CurrChar = '(' then
-      Inc(Res)
-    else if CurrChar = ')' then
-      Dec(Res);
+      AssignFile(FileData, FilePath);
+      Reset(FileData);
+      while not EOF(FileData) do
+      begin
+        ReadLn(FileData, Line);
+        StringBuilder.Add(Line);
+      end;
+      CloseFile(FileData);
+      Result := StringBuilder.Text;
+    end
+    else
+      Writeln('File not found: ', FilePath);
+  finally
+    StringBuilder.Free;
   end;
+end;
 
-  Result := Res;
+function Part1(const Directions: string): Integer;
+var
+  i: Integer;
+begin
+  Result := 0;
+  for i := 1 to Length(Directions) do
+  begin
+    case Directions[i] of
+      '(': Inc(Result);
+      ')': Dec(Result);
+    end;
+  end;
 end;
 
 var
-  FileName: String;
+  FileName: string;
   FileContents: string;
   Expected, Actual: Integer;
-  ExpectedResults: array[1..9] of Integer = (0, 0, 3, 3, 3, -1, -1, -3, -3);
   AllTestsPassed: Boolean = True;
   I: Integer;
+
 begin
-  for i := 1 to 9 do
+  for I := 1 to NumberOfTests do
   begin
-    FileName := Format('../inputs/sample.%d', [i]);
+    FileName := Format('../inputs/sample.%d', [I]);
     FileContents := ReadFileContentsAsString(FileName);
-    Expected := ExpectedResults[i];
-    Actual := Part1(FileContents);
-    if Expected = Actual then
-      Writeln('Sample ', I, ' is correct!')
-    else
+
+    if FileContents <> '' then
     begin
-      AllTestsPassed := False;
-      Writeln('Sample ', I, ' is incorrect!');
-      Writeln('Expected: ', Expected);
-      Writeln('Actual:   ', Actual);
+      Expected := ExpectedResults[I];
+      Actual := Part1(FileContents);
+      if Expected = Actual then
+        Writeln('Sample ', I, ' is correct!')
+      else
+      begin
+        AllTestsPassed := False;
+        Writeln('Sample ', I, ' is incorrect!');
+        Writeln('Expected: ', Expected);
+        Writeln('Actual:   ', Actual);
+      end;
     end;
   end;
 
   if AllTestsPassed then
   begin
     FileContents := ReadFileContentsAsString('../inputs/input');
-    Actual := Part1(FileContents);
-    Writeln('Result for part 1: ', Actual);
+    if FileContents <> '' then
+    begin
+      Actual := Part1(FileContents);
+      Writeln('Result for part 1: ', Actual);
+    end;
   end;
 end.
+
